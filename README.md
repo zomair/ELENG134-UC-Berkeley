@@ -1,5 +1,5 @@
 # ELENG134-UC-Berkeley
-This code produces the I-V characteristics of a PV cell. Please cite the following, for any usage of this code:
+This code produces the I-V characteristics of a PV cell, currently being used for the class project of 'Fundamentals of Photovoltaic Devices' at UC Berkeley. This code is based on the following paper. Please cite the following, for any usage of this code:
 
 Ultraefficient thermophotovoltaic power conversion by band-edge spectral filtering
 Zunaid Omair, Gregg Scranton, Luis M. Pazos-Outón, T. Patrick Xiao, Myles A. Steiner, Vidya Ganapati, Per F. Peterson, John Holzrichter, Harry Atwater, Eli Yablonovitch
