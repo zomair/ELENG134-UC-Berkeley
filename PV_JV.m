@@ -1,7 +1,7 @@
 % author - Zunaid Omair, zomair@eecs.berkeley.edu
 % For use of the code in any work, please cite https://doi.org/10.1073/pnas.1903001116 
 
-function[DeviceEfficiency,Voc,Jsc,FF,Vop,Jop] = PV_JV(Eg)
+function[DeviceEfficiency,Voc,Jsc,FF,Vmpp,Jmpp] = PV_JV(Eg)
 %% fundamental constants
 
 fund_consts;
@@ -160,13 +160,13 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
                 Vnew = Vnew-(Voc-Vnew)/2;
                 
             else
-                Vop = Vnew;
-                Jop = J1;
+                Vmpp = Vnew;
+                Jmpp = J1;
             end
             k = k+1;
            
         end
-        FF = Vop*Jop/(Voc*Jsc);
+        FF = Vmpp*Jmpp/(Voc*Jsc);
             
         
     %[n,p] = CarrierConcentration(n_i,Vop,Eg,ND,NA,Nc,Nv,Tc);
