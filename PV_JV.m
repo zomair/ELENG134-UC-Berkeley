@@ -175,6 +175,6 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
     %[Nonradiative_loss,Mirror_loss,Radiative_escape,B] = all_loss(n_i,n,p,phi_rear_no_bias,Cn,Cp,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Vop,Tc,E,alpha,nr,L);
     %InternalPLQE = B.*n.*p./(B.*n.*p+Nonradiative_loss/L);
     %% calculating efficiency
-    DeviceEfficiency = Vop*Jop/trapz(Esource,Pin); % maximum efficiency at a particular emitter temperature
+    DeviceEfficiency = Vmpp*Jmpp/trapz(Esource,Pin); % maximum efficiency at a particular emitter temperature
 end
  
