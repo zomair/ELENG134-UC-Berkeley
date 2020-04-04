@@ -1,7 +1,7 @@
 % author - Zunaid Omair, zomair@eecs.berkeley.edu
 % For use of the code in any work, please cite https://doi.org/10.1073/pnas.1903001116 
 
-function[DeviceEfficiency,Voc,Jsc,FF,Vmpp,Jmpp] = PV_JV(Eg)
+function[DeviceEfficiency,Voc,Jsc,FF,Vmpp,Jmpp] = PV_JV
 %% fundamental constants
 
 fund_consts;
@@ -76,6 +76,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
      Vop = 0;
      Jop = 0;
      DeviceEfficiency =0;
+     "Bandgap is too small!"
      return;
  end
  % get an ideal Voc with unity external PLQE
@@ -88,23 +89,80 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
  
  
     if (((Rs>0) || (Rsh<1e5)) && strcmp(Material,'Lossy'))    
-        PLQEStart = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Eg/q*0.2,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
+        [n,p] =  CarrierConcentration(n_i,Eg/q,Eg,ND,NA,Nc,Nv,Tc);
+        if (n*p-n_i^2)<=0 % SRH-limited regime
+            Voc =0;
+            FF=0;
+            Vmpp=0;
+            Jmpp =0;
+            DeviceEfficiency =0;
+            "Your device is SRH dominated!"
+            return;
+        end
+        
+        if Vocstart<=0
+            Voc =0;
+            FF=0;
+            Vmpp=0;
+            Jmpp =0;
+            DeviceEfficiency =0;
+            "Your device is Auger dominated!"
+            return;
+        end
+        PLQEStart = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Eg/q,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
         
         Vocstart = Vt*(log(Jsc/J01)+log(PLQEStart));
-        Vser =@(x) x*Rs;
-        Jfunc = @(J,V) mymult((1-isinf(exp((V-Vser(J))/Vt))),(J-(Jsc-(J01/(external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,V-Vser(J),ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L))).*...
-                 (exp((V-Vser(J))/Vt))-((V-Vser(J))/Rsh))))+...
-                 mymult(isinf(exp((V-Vser(J))/Vt)),J-Jsc+(V-Vser(J))/Rsh); % anonymous function for diode J-V, including all non-idealities
-        Vocfunc = @(V)  Jsc-(J01/(external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,V,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L))).*...
-                 (exp((V)/Vt))-V/Rsh;
+        Vser =@(x) -x*Rs;
+        Vdiode = @(J,V) V-Vser(J);
+        PLQEfunc = @(J,V) external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Vdiode(J,V),ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
+        Jfunc = @(J,V) mymult((1-isinf(exp(Vdiode(J,V)/Vt))),(J-Jsc+J01/PLQEfunc(J,V).*...
+                 exp(Vdiode(J,V)/Vt)+Vdiode(J,V)/Rsh))+...
+                 mymult(isinf(exp(Vdiode(J,V)/Vt)),J-Jsc+Vdiode(J,V)/Rsh); % anonymous function for diode J-V, including all non-idealities
+        Vocfunc = @(V)  Jsc-J01/PLQEfunc(0,V).*...
+                 exp((V)/Vt)-V/Rsh;
     elseif (((Rs>0) || (Rsh<1e5)) && strcmp(Material,'Ideal'))    
         PLQEStart = 1;
+        
         Vocstart = Vt*(log(Jsc/J01)+log(PLQEStart));
-        Vser =@(x) x*Rs;
-        Jfunc = @(J,V) mymult((1-isinf(exp((V-Vser(J))/Vt))),(J-(Jsc-J01.*...
-                 exp((V-Vser(J))/Vt)-(V-Vser(J))/Rsh)))+...
-                 mymult(isinf(exp((V-Vser(J))/Vt)),J-Jsc+(V-Vser(J))/Rsh); % anonymous function for diode J-V, including all non-idealities
-        Vocfunc = @(V)  Jsc-J01.*...
+        Vser =@(x) -x*Rs;
+        Vdiode = @(J,V) V-Vser(J);
+        PLQEfunc = @(J,V) 1;
+        Jfunc = @(J,V) mymult((1-isinf(exp(Vdiode(J,V)/Vt))),(J-Jsc+J01/PLQEfunc(J,V).*...
+                 exp(Vdiode(J,V)/Vt)+Vdiode(J,V)/Rsh))+...
+                 mymult(isinf(exp(Vdiode(J,V)/Vt)),J-Jsc+Vdiode(J,V)/Rsh); % anonymous function for diode J-V, including all non-idealities
+        Vocfunc = @(V)  Jsc-J01/PLQEfunc(0,V).*...
+                 exp((V)/Vt)-V/Rsh;
+     elseif (((Rs==0) && (Rsh>=1e5)) && strcmp(Material,'Lossy')) 
+        [n,p] =  CarrierConcentration(n_i,Eg/q,Eg,ND,NA,Nc,Nv,Tc);
+        
+        if (n*p-n_i^2)<=0
+            Voc =0;
+            FF=0;
+            Vmpp=0;
+            Jmpp =0;
+            DeviceEfficiency =0;
+            "Your device is SRH dominated!"
+            return;
+        end
+        PLQEStart = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Eg/q,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
+        
+        Vocstart = Vt*(log(Jsc/J01)+log(PLQEStart));
+        if Vocstart<=0
+            Voc =0;
+            FF=0;
+            Vmpp=0;
+            Jmpp =0;
+            DeviceEfficiency =0;
+            "Your device is Auger dominated!"
+            return;
+        end
+        Vser =@(x) 0;
+        Vdiode = @(J,V) V-Vser(J);
+        PLQEfunc = @(J,V) external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Vdiode(J,V),ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
+        Jfunc = @(J,V) mymult((1-isinf(exp(Vdiode(J,V)/Vt))),(J-Jsc+J01/PLQEfunc(J,V).*...
+                 exp(Vdiode(J,V)/Vt)+Vdiode(J,V)/Rsh))+...
+                 mymult(isinf(exp(Vdiode(J,V)/Vt)),J-Jsc+Vdiode(J,V)/Rsh); % anonymous function for diode J-V, including all non-idealities
+        Vocfunc = @(V)  Jsc-J01/PLQEfunc(0,V).*...
                  exp((V)/Vt)-V/Rsh;
     else
         PLQEStart = 1;
@@ -115,11 +173,24 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
          Vocfunc = @(V)  Jsc-(J01.*...
                  exp((V)/Vt));
     end
-        Voc = fzero(Vocfunc,Vocstart); 
+        
+        
+        Voc = fzero(Vocfunc,Vocstart);
+        if ((Voc<=0)|| isnan(Voc))
+            Voc =0;
+            FF=0;
+            Vmpp=0;
+            Jmpp =0;
+            DeviceEfficiency =0;
+            "Your device is Auger dominated!"
+            return;
+        end
         MAX =0;
         RISE = 0;
         FALL =0;
         Vnew = Voc*0.5;
+        
+        
         
         
         J0 = Jsc*3/4;
@@ -158,7 +229,6 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
                 J0 = J3;
             elseif(FALL)
                 Vnew = Vnew-(Voc-Vnew)/2;
-                
             else
                 Vmpp = Vnew;
                 Jmpp = J1;
@@ -170,7 +240,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             
         
     %[n,p] = CarrierConcentration(n_i,Vop,Eg,ND,NA,Nc,Nv,Tc);
-    %PLQE = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Vop,ND,NA,Nc,Nv,Tc,E,alpha,nr,L); % calculating the external PLQE
+    %PLQE = PLQEfunc(Jmpp,Vmpp); % calculating the external PLQE
 
     %[Nonradiative_loss,Mirror_loss,Radiative_escape,B] = all_loss(n_i,n,p,phi_rear_no_bias,Cn,Cp,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Vop,Tc,E,alpha,nr,L);
     %InternalPLQE = B.*n.*p./(B.*n.*p+Nonradiative_loss/L);

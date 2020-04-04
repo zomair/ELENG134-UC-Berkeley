@@ -4,14 +4,15 @@
     EQE =1;
     %% Circuit parameter for the solar cell, in units of Ohm.m2
     Rs = 0; % series resistance
-    Rsh = 1e7; % shunt resistance
+    Rsh = 1e6; % shunt resistance
     
     
     %% environmental parameters
     Tc =300; % temperature of the cell
     
     %% doping density
-    ND = 1e10; % donor doping density 
+   
+    ND = 8*1e25; % donor doping density 
     NA = 0; % acceptor doping density
     
     %% Cell geometrical parameter
@@ -19,7 +20,7 @@
     
     
     %% material recombination parameters
-    Material = 'Ideal'; %either Lossy or Ideal
+    Material = 'Lossy'; %either Lossy or Ideal
     if strcmp(Material,'Lossy')
         tau_SRH = 10e-6; % SRH lifetime in units of Seconds
         Cn = 1e-30*1e-12; % Hole auger Parameter value, from Ahrenkiel 
@@ -40,8 +41,8 @@
        Lambda = zeros(1,100); %% provide the wavelengths (in m) at which the
        % absorption coefficient was measured, the array length should be 
        %the same as the absorption coefficient array
-    %else
-        %Eg = 1.31*q;
+    else
+        Eg = 1.31*q; % bandgap
     
     end
     
@@ -49,8 +50,8 @@
        % unitless
     
     %% effective mass calculation
-    mc = 0.71*m0; % electron DOS effective mass
-    mv = 1.1*m0; % hole DOS effective mass
+    mc = 0.067*m0; % electron DOS effective mass
+    mv = 0.45*m0; % hole DOS effective mass
     
     %% incident spectrum
     SourceType = 'Blackbody'; % can be eithe Blackbody expression or an 

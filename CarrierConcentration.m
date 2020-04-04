@@ -36,7 +36,6 @@ function [n,p] = CarrierConcentration(n_i,V,Eg,ND,NA,Nc,Nv,Tc)
         x0 = -Eg/2;
     end
     
-    
     fun = @(x) (Nc)*fermi(0.5,x)-(Nv)*fermi(0.5,-x-eps)-eff_N;
     
     xact = fzero(fun,x0+0.01); % dummy variable, actual value of x
