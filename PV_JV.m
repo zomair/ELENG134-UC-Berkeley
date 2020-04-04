@@ -68,23 +68,18 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
  
  %% Short-circuit current density
  PinModified = interp1(Esource,Pin,E,'linear','extrap');
- Jsc = q*trapz(E,EQE.*PinModified./E.*a);
+ Jsc = q*trapz(E,IQE.*a.*PinModified./E.^2);
  
  if (J01>=Jsc)   %% Device is working as LED than PV cell
      FF=0;
      Voc = 0;
-     Vop = 0;
-     Jop = 0;
+     Vmpp = 0;
+     Jmpp = 0;
      DeviceEfficiency =0;
      "Bandgap is too small!"
      return;
  end
- % get an ideal Voc with unity external PLQE
- 
-    
- % assuming the operating voltage to be 100 mV lower than best Voc, to
- % get a more accurate starting point on the actual PLQE
- %(Eg/q*0.2
+
  
  
  
@@ -245,6 +240,6 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
     %[Nonradiative_loss,Mirror_loss,Radiative_escape,B] = all_loss(n_i,n,p,phi_rear_no_bias,Cn,Cp,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Vop,Tc,E,alpha,nr,L);
     %InternalPLQE = B.*n.*p./(B.*n.*p+Nonradiative_loss/L);
     %% calculating efficiency
-    DeviceEfficiency = Vmpp*Jmpp/trapz(Esource,Pin); % maximum efficiency at a particular emitter temperature
+    DeviceEfficiency = Vmpp*Jmpp/trapz(Esource,Pin./Esource); % maximum efficiency at a particular emitter temperature
 end
  
