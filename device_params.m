@@ -20,7 +20,7 @@
     
     
     %% material recombination parameters
-    Material = 'Lossy'; %either Lossy or Ideal
+    Material = 'Ideal'; %either Lossy or Ideal
     if strcmp(Material,'Lossy')
         tau_SRH = 10e-6; % SRH lifetime in units of Seconds
         Cn = 1e-30*1e-12; % Hole auger Parameter value, from Ahrenkiel 
