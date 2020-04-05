@@ -15,7 +15,7 @@ device_params;
 
 
 
-E = ((Eg/20):(Eg/10):(Eg*10)); % array of photon energies
+E = [1e-4:1e-3:Eg/(2*q) Eg/(2*q)+1e-3:Eg/(100*q):2*Eg/(q) 2*Eg/q+0.1:0.1:10]*q; % array of photon energies
 
 
 % step-function absorptivity
@@ -67,8 +67,8 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
  
  
  %% Short-circuit current density
- PinModified = interp1(Esource,Pin,E,'linear','extrap');
- Jsc = q*trapz(E,IQE.*a.*PinModified./E.^2);
+ PinModified = interp1(Esource,Pin,E,'linear',0);
+ Jsc = q*abs(trapz(E,IQE.*a.*PinModified./E.^2));
  
  if (J01>=Jsc)   %% Device is working as LED than PV cell
      FF=0;
@@ -76,7 +76,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
      Vmpp = 0;
      Jmpp = 0;
      DeviceEfficiency =0;
-     "Bandgap is too small!"
+     disp('Bandgap is too small!')
      return;
  end
 
@@ -91,7 +91,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            "Your device is SRH dominated!"
+            disp('Your device is SRH dominated!')
             return;
         end
         
@@ -101,7 +101,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            "Your device is Auger dominated!"
+            disp('Your device is Auger dominated!')
             return;
         end
         PLQEStart = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Eg/q,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
@@ -136,7 +136,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            "Your device is SRH dominated!"
+            disp('Your device is SRH dominated!');
             return;
         end
         PLQEStart = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Eg/q,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
@@ -148,7 +148,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            "Your device is Auger dominated!"
+            disp('Your device is Auger dominated!"');
             return;
         end
         Vser =@(x) 0;
@@ -177,7 +177,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            "Your device is Auger dominated!"
+            disp('Your device is Auger dominated!');
             return;
         end
         MAX =0;
@@ -240,6 +240,6 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
     %[Nonradiative_loss,Mirror_loss,Radiative_escape,B] = all_loss(n_i,n,p,phi_rear_no_bias,Cn,Cp,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Vop,Tc,E,alpha,nr,L);
     %InternalPLQE = B.*n.*p./(B.*n.*p+Nonradiative_loss/L);
     %% calculating efficiency
-    DeviceEfficiency = Vmpp*Jmpp/trapz(Esource,Pin./Esource); % maximum efficiency at a particular emitter temperature
+    DeviceEfficiency = Vmpp*Jmpp/abs(trapz(Esource,Pin./Esource)); % maximum efficiency at a particular emitter temperature
 end
  
