@@ -76,7 +76,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
      Vmpp = 0;
      Jmpp = 0;
      DeviceEfficiency =0;
-     disp('Bandgap is too small!')
+     %disp('Bandgap is too small!')
      return;
  end
 
@@ -91,7 +91,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            disp('Your device is SRH dominated!')
+            %disp('Your device is SRH dominated!')
             return;
         end
         
@@ -101,7 +101,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            disp('Your device is Auger dominated!')
+            %disp('Your device is Auger dominated!')
             return;
         end
         PLQEStart = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Eg/q,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
@@ -136,7 +136,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            disp('Your device is SRH dominated!');
+            %disp('Your device is SRH dominated!');
             return;
         end
         PLQEStart = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Eg/q,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
@@ -148,7 +148,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            disp('Your device is Auger dominated!"');
+            %disp('Your device is Auger dominated!"');
             return;
         end
         Vser =@(x) 0;
@@ -177,7 +177,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             Vmpp=0;
             Jmpp =0;
             DeviceEfficiency =0;
-            disp('Your device is Auger dominated!');
+            %disp('Your device is Auger dominated!');
             return;
         end
         MAX =0;
