@@ -10,22 +10,24 @@ device_params;
 
 
 
-
 %% device parameters
 
 
-
-E = [1e-4:1e-3:Eg/(2*q) Eg/(2*q)+1e-3:Eg/(100*q):2*Eg/(q) 2*Eg/q+0.1:0.1:10]*q; % array of photon energies
+E = [1e-4:1e-3:Eg/(2*q) Eg/(2*q)+1e-3:Eg/(100*q):2*Eg/(q) 2*Eg/q+0.1:0.1:15]*q; % array of photon energies
 
 
 % step-function absorptivity
 if strcmp(Absorptivity,'Step')
+    
     a=ones(1,length(E)); 
     a(E<Eg) =0;
     alphaGiven = 1e3/L*ones(1,length(E));
 else
+    
     Energies = h*c./Lambda;
-    alphaGiven = interp1(Energies,AbsorpCoeff,E,'linear','extrap'); 
+    alphaGiven = zeros(size(E));
+    alphaGiven(E<=Eg) = interp1(Energies(Energies<=Eg),AbsorpCoeff(Energies<=Eg),E(E<=Eg),'linear',0); 
+    alphaGiven(E>Eg) = interp1(Energies(Energies>Eg),AbsorpCoeff(Energies>Eg),E(E>Eg),'linear','extrap');
     a= FrontAbsorption(alphaGiven,L,RefBelow,Tfront); % absorptivity of the solar cell
 end
 
@@ -37,8 +39,19 @@ Nc = 2*(mc*kb*Tc/(2*pi*(h/2/pi)^2)).^(1.5);
 Nv = 2*(mv*kb*Tc/(2*pi*(h/2/pi)^2)).^(1.5);
 n_i = sqrt(Nc.*Nv).*exp(-Eg/(2*kb*Tc));
 
- 
- 
+%% calculating bulk resistivity
+
+if strcmp(Material,'Ideal')
+    RsBulk =0;
+else
+    [n,p] = CarrierConcentration(n_i,0,Eg,ND,NA,Nc,Nv,Tc);
+
+    RsBulk = 0.5*L/(Mun*n*q+Mup*p*q); % half in the front is L is to account for 
+     % distance travelled by the carrier in opposite directions
+end
+
+
+Rs = RsBulk+RsContact;
 
 %% solving for emission out of rear mirror, into the PV cell
 theta = linspace(0,pi/2,1000);
@@ -46,9 +59,13 @@ if strcmp(Absorptivity,'Step')
     [arear,ENERGY,THETA] = RearMirrorEmissivity(E,theta,nr,alphaGiven,L,RefBelow); 
 else
     [arear,ENERGY,THETA] = RearMirrorEmissivity(E,theta,nr,alphaGiven,L,RefBelow); 
+    
 end
 rear_emission= 2*pi*arear.*2*nr^2.*ENERGY.^2.*1./(exp(ENERGY/(kb*Tc))-1).*sin(THETA).*cos(THETA)/(c^2*h^3); % rate of rear absorption in #photons/(energy*radian*surface area)
-phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
+
+%(trapz(theta,rear_emission,1))
+
+phi_rear_no_bias = abs(trapz(E,trapz(theta,rear_emission,1)));
 
 %% calculating the current due to generation in the depletion region, for now assuming negligible
  J02 = 0;
@@ -59,8 +76,8 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
 
  %% solving for photon emission rate through the front surface 
  bc =  blackbody_photon_counts(E,Tc); 
- phi_esc_zero_bias = trapz(E,a.*bc);  % #s of photons emitted per unit area per unit time
- J01 = (q)*phi_esc_zero_bias*2;
+ phi_esc_zero_bias = abs(trapz(E,a.*bc));  % #s of photons emitted per unit area per unit time
+ J01 = (q)*phi_esc_zero_bias;
  
  %% solving for current-voltage curve
  Vt = kb*Tc/q; % thermal voltage 
@@ -95,6 +112,10 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             return;
         end
         
+        
+        PLQEStart = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Eg/q,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
+        
+        Vocstart = Vt*(log(Jsc/J01)+log(PLQEStart));
         if Vocstart<=0
             Voc =0;
             FF=0;
@@ -104,9 +125,6 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
             %disp('Your device is Auger dominated!')
             return;
         end
-        PLQEStart = external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Eg/q,ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
-        
-        Vocstart = Vt*(log(Jsc/J01)+log(PLQEStart));
         Vser =@(x) -x*Rs;
         Vdiode = @(J,V) V-Vser(J);
         PLQEfunc = @(J,V) external_PLQE(n_i,Cn,Cp,Eg,phi_rear_no_bias,tau_SRH,SRH_depletion_zero_bias,phi_esc_zero_bias,Vdiode(J,V),ND,NA,Nc,Nv,Tc,E,alphaGiven,nr,L);
@@ -131,6 +149,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
         [n,p] =  CarrierConcentration(n_i,Eg/q,Eg,ND,NA,Nc,Nv,Tc);
         
         if (n*p-n_i^2)<=0
+            
             Voc =0;
             FF=0;
             Vmpp=0;
@@ -168,7 +187,7 @@ phi_rear_no_bias = trapz(E,trapz(theta,rear_emission,1));
          Vocfunc = @(V)  Jsc-(J01.*...
                  exp((V)/Vt));
     end
-        
+       
         
         Voc = fzero(Vocfunc,Vocstart);
         if ((Voc<=0)|| isnan(Voc))

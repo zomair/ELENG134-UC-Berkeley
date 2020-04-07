@@ -3,7 +3,7 @@
     
     IQE =1; % internal quantum efficiency
     %% Circuit parameter for the solar cell, in units of Ohm.m2
-    Rs = 0; % series resistance
+    RsContact = 0; % series resistance
     Rsh = 1e6; % shunt resistance
     
     
@@ -16,16 +16,18 @@
     NA = 0; % acceptor doping density
     
     %% Cell geometrical parameter
-    L = 2.5e-6; % thickness of cell
+    L = 1e-6; % thickness of cell
     
+    %% Material parameters
     
-    %% material recombination parameters
-    Material = 'Ideal'; %either Lossy or Ideal
+    Material ='Lossy'; %either Lossy or Ideal
     if strcmp(Material,'Lossy')
-        tau_SRH = 10e-6; % SRH lifetime in units of Seconds
-        Cn = 1e-30*1e-12; % Electron Auger recombination coefficient 
-        Cp = Cn;% Hole Auger recombination coefficient 
+        tau_SRH = 1e-6; % SRH lifetime in units of Seconds
+        Cn = 1.1e-30*1e-12; % Electron Auger recombination coefficient 
+        Cp = 0.3*1e-30*1e-12;% Hole Auger recombination coefficient 
         RefBelow = 1;  % reflectivity of the back-mirror of the cell
+        Mun = 1e3*1e-4; % electron mobility in m^2/(V.sec)
+        Mup = 500*1e-4;% hole mobility in m^2/(V.sec)
     else
         RefBelow = 1;  % reflectivity of the back-mirror of the cell
     end
@@ -33,14 +35,15 @@
     
     
     %% Absorption Coefficients 
-    Absorptivity = 'Step'; % can be either Step or Dispersive
+    Absorptivity = 'Dispersive'; % can be either Step or Dispersive
     if strcmp(Absorptivity,'Dispersive')
         
-       AbsorpCoeff = ones(1,100); %% provide the material absorption coefficient
+       AbsorpCoeff = ; %% provide the material absorption coefficient
        % here, in units of 1/m
-       Lambda = zeros(1,100); %% provide the wavelengths (in m) at which the
+       Lambda = ; %% provide the wavelengths (in m) at which the
        % absorption coefficient was measured, the array length should be 
        %the same as the absorption coefficient array
+       Eg = 1.124*q;
     else
         Eg = 1.31*q; % bandgap
     
@@ -50,16 +53,16 @@
        % unitless
     
     %% effective mass calculation
-    mc = 0.067*m0; % electron DOS effective mass
-    mv = 0.45*m0; % hole DOS effective mass
+    mc = 1.06*m0; % electron DOS effective mass
+    mv = 0.59*m0; % hole DOS effective mass
     
     %% incident spectrum
-    SourceType = 'Blackbody'; % can be eithe Blackbody expression or an 
+    SourceType = 'Spectrum'; % can be eithe Blackbody expression or an 
     % tabular spectrum, like AM 1.5 in W/m^2
     if strcmp(SourceType,'Spectrum')
-        Pin = ones(1,100); %% provide the material incident spectrum here
+        Pin =  ; %% provide the material incident spectrum here
        % , in units of W/m2
-        LambdaSource = zeros(1,100); %% provide the wavelengths (in m) at
+        LambdaSource = ; %% provide the wavelengths (in m) at
        % which the incident spectrum  was measured, the array length should
        % be the same as the absorption coefficient array
        
