@@ -64,7 +64,7 @@
        % , in units of W/m2
         LambdaSource = ; %% provide the wavelengths (in m) at
        % which the incident spectrum  was measured, the array length should
-       % be the same as the absorption coefficient array
+       % be the same as the Pin array
        
        Esource = h*c./LambdaSource;
     else
