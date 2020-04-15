@@ -223,8 +223,8 @@ phi_rear_no_bias = abs(trapz(E,trapz(theta,rear_emission,1)));
             DoubleSlope=(P2-P1)/(P4-P3);
             Slope =P2-P1;
             if (k>1e3) && (abs(DoubleSlope-1)<1e-5) % if the Rs is too high
-                Vmpp = Voc/2; % I-V curve is linear
-                Jmpp = Jsc/2;
+                Vmpp = 0; % I-V curve is linear
+                Jmpp = 0;
                 break;
             elseif (DoubleSlope>0) && (Slope>0)
                 MAX =0;
